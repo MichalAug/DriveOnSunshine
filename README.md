@@ -25,17 +25,17 @@ In my case, currents and power measurements are performed by shelly 3m.
 - Monitor how the system reacts to changes in the steady-state current of the load and how quickly it adjusts to variable loads.
 - Pay attention to the settling time (time required to reach the target value) and oscillations.
 
-## Increasing Kp:
+### Increasing Kp:
 
 - If the system responds too slowly, increase Kp.
 - If the response is fast but oscillations occur, decrease Kp.
 
-## Tuning Ki:
+### Tuning Ki:
 
 - If the system exhibits a consistent error (e.g., the current does not reach the exact maximum value), increase Ki.
 - If the response is too aggressive, decrease Ki.
 
-## Tuning Kd:
+### Tuning Kd:
 
 - If oscillations occur or the system is unstable, increase Kd.
 - If damping is too strong (the system responds very slowly), decrease Kd.
