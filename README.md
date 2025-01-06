@@ -39,3 +39,5 @@ In my case, currents and power measurements are performed by shelly 3m.
 
 - If oscillations occur or the system is unstable, increase Kd.
 - If damping is too strong (the system responds very slowly), decrease Kd.
+
+![PID regulator](https://github.com/MichalAug/DriveOnSunshine/blob/pics/PID.png)
