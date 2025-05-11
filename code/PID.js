@@ -3,21 +3,22 @@ const maxIntegral = 5; // Maksymalna dopuszczalna wartość integralnej części
 const minIntegral = -5; // Minimalna dopuszczalna wartość integralnej części
 
 // Parametry PID
-let kp = 0.4; // Proporcjonalne wzmocnienie
-let ki = 0.05; // Całkowe wzmocnienie
-let kd = 0.11; // Różniczkowe wzmocnienie
+let kp = 0.3;//0.4; //było 0.5;  // Proporcjonalne wzmocnienie
+let ki = 0.1; //0.05; //było 0.1// Całkowe wzmocnienie
+let kd = 0.11; //0.08; //było 0.06; // Różniczkowe wzmocnienie
 
 // Wejścia (wartości prądów)
 const maxCurrent = 20; // Domyślnie 20A
 const currentSource = msg.currentSource;
 const currentAdjustable = msg.currentChargingCurrent;
+const currentBalanced = msg.currentBalanced||32;
 
 // Bufor dla wartości wejściowych
 context.inputBuffer = context.inputBuffer || [];
 context.inputBuffer.push(currentSource);
 
 // Zachowaj tylko 5 ostatnich wartości
-if (context.inputBuffer.length > 5) {
+if (context.inputBuffer.length > 2) {
     context.inputBuffer.shift();
 }
 
@@ -69,11 +70,14 @@ if (error > upperThreshold) {
 // Zaktualizowanie wyjścia
 let newCurrentAdjustable = currentAdjustable + adjustment;
 newCurrentAdjustable = Math.round(newCurrentAdjustable);  // Zaokrąglanie do 1A
-newCurrentAdjustable = Math.min(Math.max(newCurrentAdjustable, 8), 24);  // Ograniczenie zakresu (min 8A, max 20A)
+newCurrentAdjustable = Math.min(Math.max(newCurrentAdjustable, 8), 32);  // Ograniczenie zakresu (min 8A, max 20A)
 
 // Zapisz bieżący błąd do kolejnej iteracji
 context.previousError = error;
 
-// Wyjście
-msg.payload = newCurrentAdjustable;
+if (currentBalanced > newCurrentAdjustable) {
+    msg.payload = newCurrentAdjustable;    
+} else {
+    msg.payload = currentBalanced;    
+}
 return msg;
