@@ -12,6 +12,7 @@ In my case, currents and power measurements are performed by shelly 3m.
 ## 📖 Energy dashboard with regulator on
 
 ![nodered](https://github.com/MichalAug/DriveOnSunshine/blob/pics/energy.png)
+The regulator was on from 10.30 to 13.00, then the car was charged to 80% and charging was completed.
 
 ## 📖 Node-red Flow
 
