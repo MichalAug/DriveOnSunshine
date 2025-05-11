@@ -19,7 +19,7 @@ In my case, currents and power measurements are performed by shelly 3m.
 
 ## 📚 
 - **currentbalanced.js** - here you will find the controller code for hourly balancing
-- **PID.js** - if you don't have node-red, here you will find the PID controller code in javascript, adjust it to your needs
+- **PID.js** - here you will find the PID controller code in javascript, adjust it to your needs
 
 ## 🚀 Testing and Tuning Steps
 
