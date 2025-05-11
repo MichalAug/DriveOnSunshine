@@ -1,36 +1,68 @@
-// Konfiguracja
-const minCurrent = 8; // Minimalny prąd ładowania (A)
+// Pobranie danych wejściowych
+const totalPowerActual = msg.totalPowerActual.state; // Aktualna moc chwilowa (W)
+const powerHourBalance = msg.currentBalance.state * 1000; // Godzinowy bilans energii (Wh)
+const currentChargingCurrent = msg.currentChargingCurrent; // Aktualny prąd ładowania (A)
+
+// Parametry ładowarki
 const maxCurrent = 32; // Maksymalny prąd ładowania (A)
-const stepCurrent = 1; // Krok regulacji prądu (A)
+const minCurrent = 8; // Minimalny prąd ładowania (A)
 
-// Parametry wejściowe
-const currentBalance = msg.currentBalance; // Bilans energetyczny (kWh)
-const remainingMinutes = 60 - (new Date()).getMinutes(); // Minuty do końca godziny
+// Czas do końca godziny w godzinach (ułamkowo)
+const remainingTime = (60 - new Date().getMinutes()) / 60;
 
-// Aktualny prąd ładowania
-let currentChargingCurrent = msg.currentChargingCurrent|| minCurrent; 
+// Obliczenie mocy docelowej na podstawie bilansu godzinowego
+const desiredPower = powerHourBalance / remainingTime; // Moc potrzebna do wyrównania bilansu (W)
 
-// Oblicz energię do skompensowania
-const energyToCompensate = currentBalance; // Wartość ujemna oznacza potrzebę poboru
+// Obliczenie mocy do skompensowania
+const compensationPower = (-totalPowerActual + 2*desiredPower)/3; // zwiększenie wagi bilansu względem chwilowej
 
-// Maksymalny pobór energii w pozostałym czasie (kWh)
-const maxEnergyConsumption = (remainingMinutes / 60) * maxCurrent * 230 / 1000;
+// Parametry regulatora PID
+const Kp = 0.8; //0.5            // Wzmocnienie proporcjonalne
+const Ki = 0.1; //0.04;            // Wzmocnienie całkujące
+const Kd = 0.1; //0.125;           // Wzmocnienie różniczkujące
+const dt = 2.5;             // Próbkowanie w sekundach 
 
-// Minimalny pobór energii w pozostałym czasie (kWh)
-const minEnergyConsumption = (remainingMinutes / 60) * minCurrent * 230 / 1000;
+// Stan regulatora PID (przechowywany w pamięci przepływu Node-RED)
+let pidState = flow.get("pidState") || { integral: 0, previousError: 0 };
 
-// Oblicz nowy prąd ładowania
-if (energyToCompensate > maxEnergyConsumption) {
-    currentChargingCurrent = maxCurrent;
-} else if (energyToCompensate < minEnergyConsumption) {
-    currentChargingCurrent = minCurrent;
-} else {
-    // Oblicz optymalny prąd ładowania w celu zbilansowania
-    currentChargingCurrent = Math.round((energyToCompensate * 1000) / (230 * remainingMinutes / 60));
-    currentChargingCurrent = Math.max(minCurrent, Math.min(maxCurrent, currentChargingCurrent));
-    currentChargingCurrent = Math.round(currentChargingCurrent / stepCurrent) * stepCurrent; // Zaokrąglenie do kroku
+// Sprawdzenie, czy jest pełna godzina
+const currentTime = new Date();
+if (currentTime.getMinutes() === 0 && currentTime.getSeconds() === 0) {
+    // Zerowanie stanu PID o pełnej godzinie
+    pidState = { integral: 0, previousError: 0 };
 }
 
-// Wyślij wynik
-msg.payload = currentChargingCurrent; // Prąd ładowania (A)
+// Obliczenie błędu PID
+const error = compensationPower; // Błąd PID to moc do skompensowania (W)
+pidState.integral += error * dt; // Aktualizacja składnika całkującego
+const derivative = (error - pidState.previousError) / dt; // Składnik różniczkujący
+pidState.previousError = error; // Zapisanie bieżącego błędu
+
+// Wyjście PID
+const pidOutput = Kp * error;// + Ki * pidState.integral + Kd * derivative;
+
+// Obliczenie nowego prądu ładowania
+let newChargingCurrent = currentChargingCurrent + pidOutput / 230; // Moc na prąd (230V)
+
+// Ograniczenie prądu ładowania do zakresu ładowarki
+newChargingCurrent = Math.max(minCurrent, Math.min(newChargingCurrent, maxCurrent));
+newChargingCurrent = Math.round(newChargingCurrent);  // Zaokrąglanie do 1A
+
+// Zapisanie stanu PID w pamięci przepływu
+flow.set("pidState", pidState);
+
+/*
+//Zwrócenie wyniku
+msg.payload = {
+    newChargingCurrent: newChargingCurrent, // Nowy prąd ładowania (A)
+    pidOutput: pidOutput, // Wyjście regulatora PID (W)
+    error: error, // Błąd regulatora PID (W)
+    compensationPower: compensationPower, // Moc do skompensowania (W)
+    desiredPower: desiredPower, // Moc docelowa z bilansu godzinowego (W)
+    totalPowerActual: totalPowerActual // Aktualna moc chwilowa (W)
+};
+*/
+msg.currentBalanced = newChargingCurrent;
+
+
 return msg;
