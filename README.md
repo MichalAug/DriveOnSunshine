@@ -13,8 +13,11 @@ In my case, currents and power measurements are performed by shelly 3m.
 
 ![nodered](https://github.com/MichalAug/DriveOnSunshine/blob/pics/nodered.png)
 
+## 📖 Home Assistant Dashboard
+
+![nodered](https://github.com/MichalAug/DriveOnSunshine/blob/pics/leaf.png)
+
 ## 📚 
-- **driveonsunshine-flow.json** - this file contains a complete flow that you can import to node-red
 - **currentbalanced.js** - here you will find the controller code for hourly balancing
 - **PID.js** - if you don't have node-red, here you will find the PID controller code in javascript, adjust it to your needs
 
